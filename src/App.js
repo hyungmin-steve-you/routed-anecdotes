@@ -1,15 +1,44 @@
 import React, { useState } from 'react'
+import { BrowserRouter as Router, Switch, Route, Link, useRouteMatch, useHistory } from 'react-router-dom'
 
-const Menu = () => {
+const Menu = ({addNew, anecdotes, notification}) => {
+  const match = useRouteMatch('/anecdotes/:id')
+  console.log('match', match)
+  console.log('anecdotes', anecdotes)
+  const anecdote = match 
+  ? anecdotes.find(a => Number(a.id) === Number(match.params.id))
+  : null
+
+  console.log('anecdote', anecdote)
+
   const padding = {
     paddingRight: 5
   }
   return (
     <div>
-      <a href='#' style={padding}>anecdotes</a>
-      <a href='#' style={padding}>create new</a>
-      <a href='#' style={padding}>about</a>
-    </div>
+      <div>
+        <Link to='/' style={padding}>anecdotes</Link>
+        <Link to='/create' style={padding}>create new</Link>
+        <Link to='/about' style={padding}>about</Link>
+      </div>
+      {notification}
+      <Switch>
+        <Route path='/anecdotes/:id'>
+          <Anecdote anecdote={anecdote}/>
+        </Route>
+        <Route path='/create'>
+          <CreateNew addNew={addNew} />
+        </Route>
+        <Route path='/about'>
+          <About />
+        </Route>
+        <Route path='/'>
+          <AnecdoteList anecdotes={anecdotes} />
+        </Route>
+      </Switch>
+
+      <Footer />
+      </div>
   )
 }
 
@@ -17,8 +46,17 @@ const AnecdoteList = ({ anecdotes }) => (
   <div>
     <h2>Anecdotes</h2>
     <ul>
-      {anecdotes.map(anecdote => <li key={anecdote.id} >{anecdote.content}</li>)}
+      {anecdotes.map(anecdote => 
+        <li key={anecdote.id} >
+          <Link to={`/anecdotes/${anecdote.id}`}>{anecdote.content}</Link>
+        </li>)}
     </ul>
+  </div>
+)
+
+const Anecdote = ({anecdote}) => (
+  <div>
+    <h2>{anecdote.content}</h2>
   </div>
 )
 
@@ -84,6 +122,7 @@ const CreateNew = (props) => {
 }
 
 const App = () => {
+  const history = useHistory()
   const [anecdotes, setAnecdotes] = useState([
     {
       content: 'If it hurts, do it more often',
@@ -106,6 +145,11 @@ const App = () => {
   const addNew = (anecdote) => {
     anecdote.id = (Math.random() * 10000).toFixed(0)
     setAnecdotes(anecdotes.concat(anecdote))
+    history.push('/')
+    setNotification(`a new anecdote "${anecdote.content}" created!`)
+    setTimeout(() => {
+      setNotification('')
+    }, 5000)
   }
 
   const anecdoteById = (id) =>
@@ -125,11 +169,9 @@ const App = () => {
   return (
     <div>
       <h1>Software anecdotes</h1>
-      <Menu />
-      <AnecdoteList anecdotes={anecdotes} />
-      <About />
-      <CreateNew addNew={addNew} />
-      <Footer />
+
+        <Menu addNew={addNew} anecdotes={anecdotes} notification={notification}/>
+
     </div>
   )
 }
